@@ -30,7 +30,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
-find_package(ICU COMPONENTS uc i18n REQUIRED)
+#find_package( PkgConfig REQUIRED )
+#pkg_check_modules( ICU REQUIRED IMPORTED_TARGET icu-i18n NO_CMAKE_PATH )
+
+#set(ICU_DEBUG ON)
+find_package(ICU REQUIRED COMPONENTS i18n uc)
 
 add_executable(ICUQtPOC
     icuconverter.cpp
@@ -48,3 +52,5 @@ target_link_libraries(ICUQtPOC PRIVATE
     ICU::uc
     ICU::i18n
 )
+#    PkgConfig::ICU
+#)

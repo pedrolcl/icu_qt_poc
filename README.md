@@ -19,8 +19,8 @@ Drumstick::File is a library, belonging to the
 [Drumstick project](https://drumstick.sourceforge.io/), that supports
 Input/Output from
 [Standard MIDI Files](https://www.midi.org/specifications-old/item/standard-midi-files-smf)
-(.MID), which include text metadata, like
-lyrics, comments, credits, copyrights, instruments, marks and cue names. Some
+(.MID), which may include text metadata, like
+lyrics, comments, credits, copyrights, instrument names, markers and cue names. Some
 programs based on Drumstick (like
 [kmidimon](https://kmidimon.sourceforge.io/) and
 [dmidiplayer](https://dmidiplayer.sourceforge.io/)
@@ -59,3 +59,32 @@ and displayed to the user.
 
 There is another POC, functionally equivalent,
 [alternative using iconv()](https://github.com/pedrolcl/iconv_qt_poc).
+
+## The ICU Nightmare in Qt
+
+If you want to build this project using the Qt online installer libraries, you are 
+going to experience problems. The Qt 6.3.0 libraries are compiled against icu 56,
+but your system libs may be newer. For instance Fedora 35 comes with icu 69.
+
+The problem is that the Qt online installer ships the icu development libraries
+(the files with the .so suffix, without a number) but not the corresponding icu
+headers. The result is that when linking the project you will get errors like:
+
+    undefined reference to `ucnv_open_69'
+
+That is because the compiler included the icu 69 headers installed in your 
+system (at /usr/include), but the linker is trying to use the icu 56 libraries, 
+installed by the online installer probably at your $HOME.
+
+One solution is to use the pkg-config utility to find ICU, but another is to 
+remove all the ICU development libraries from the Qt prefix. For instance:
+
+    libicudata.so        <- remove this symlink!
+    libicudata.so.56     <- leave this symlink alone
+    libicudata.so.56.1   <- leave also the library file 
+
+This will allow the build to succeed, but will generate the following warnings:
+
+    /usr/bin/ld: warning: libicui18n.so.56, needed by libQt6Core.so.6.3.0, may conflict with libicui18n.so.69
+    /usr/bin/ld: warning: libicuuc.so.56, needed by libQt6Core.so.6.3.0, may conflict with libicuuc.so.69
+
