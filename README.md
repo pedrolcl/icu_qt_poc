@@ -15,6 +15,23 @@ In Qt6 this class was moved from QtCore to the
 which means that it will be relegated in maintenance
 priority, and it may be totally removed in the future.
 
+See: https://bugreports.qt.io/browse/QTBUG-86437
+
+There are two use cases for the Qt6 Core5Compat module:
+
+* To allow a quick and dirty port of some application to Qt6 without fully 
+embracing the new API, perhaps for speed or pure laziness, but maybe to avoid 
+sacrificing compatibility with Qt5.
+* To keep functionality that has been removed from Qt6 core modules, but moved 
+to Core5Compat. This is the case of the QTextCodec class, which supports many 
+text encodings. This class is needed by Drumstick::File when decoding standard 
+MIDI files. In fact, all MIDI applications that read standard MIDI files need 
+to decode text metadata (credits, copyrights, lyrics, markers) from virtually 
+any encoding available for the last 30 years. Keeping this functionality is 
+critical for data preservation. The alternative to using Core5Compat in this 
+case is using other libraries like libICU or libiconv, much worse to integrate 
+in a Qt application.
+
 Drumstick::File is a library, belonging to the
 [Drumstick project](https://drumstick.sourceforge.io/), that supports
 Input/Output from
@@ -34,7 +51,8 @@ compositions from one MIDI sequencer proprietary format, and import those files
 into another sequencer. Some sequencer hardware machines and software became
 deprecated and unusable with time, and the data files in proprietary format
 became unreadable, losing work unless the users kept SMF exported files. Those
-files should now be treated as original manuscripts for data preservation.
+files should now be treated as original manuscripts for 
+[digital preservation](https://www.loc.gov/preservation/digital/formats/fdd/fdd000119.shtml).
 
 The authors of the standard, naively stated that all text metadata should be
 encoded in ASCII within a MIDI file, omitting the fact that many cultures exist
@@ -52,12 +70,12 @@ encodings into Unicode for processing.
 This project does not read SMF files. Instead, it reads plain text files with
 unknown encodings, and tries to detect the input charset using the
 [ICU CharsetDetector](https://unicode-org.github.io/icu/userguide/conversion/detection.html#charsetdetector).
-The user has a control to choose another charset using a combobox, if the
-detected one is not correct. Then, the input data is converted to Unicode by
+The user has a combobox to choose another charset if the detection is not 
+correct. Then, the input data is converted to Unicode by
 [ICU Converters](https://unicode-org.github.io/icu/userguide/conversion/converters.html#icu-converters)
 and displayed to the user.
 
-There is another POC, functionally equivalent,
+There is another POC, functionally equivalent:
 [alternative using iconv()](https://github.com/pedrolcl/iconv_qt_poc).
 
 ## The ICU Nightmare in Qt
@@ -88,3 +106,9 @@ This will allow the build to succeed, but will generate the following warnings:
     /usr/bin/ld: warning: libicui18n.so.56, needed by libQt6Core.so.6.3.0, may conflict with libicui18n.so.69
     /usr/bin/ld: warning: libicuuc.so.56, needed by libQt6Core.so.6.3.0, may conflict with libicuuc.so.69
 
+There is no danger of conflict between the two versions, because all the exported 
+symbols of each library are named with the library version suffix. But there is
+a problem creating a binary bundle containing your program and all the required
+runtime libraries: you will need to ship both versions, which are not small.
+
+See: https://bugreports.qt.io/browse/QTBUG-27930
