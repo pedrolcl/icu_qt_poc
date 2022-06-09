@@ -111,4 +111,4 @@ symbols of each library are named with the library version suffix. But there is
 a problem creating a binary bundle containing your program and all the required
 runtime libraries: you will need to ship both versions, which are not small.
 
-See: https://bugreports.qt.io/browse/QTBUG-27930
+See: https://bugreports.qt.io/browse/QTBUG-27930, https://bugreports.qt.io/browse/QTBUG-103106
