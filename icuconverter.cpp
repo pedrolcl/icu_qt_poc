@@ -17,6 +17,9 @@
 */
 
 #include <QDebug>
+#if (QT_VERSION >= QT_VERSION_CHECK(6,4,0))
+#include <QStringDecoder>
+#endif
 #include "icuconverter.h"
 
 ICUConverter::ICUConverter(const QByteArray &name):
@@ -42,8 +45,16 @@ QString ICUConverter::convertToUnicode(const char *bytes)
 
 QString ICUConverter::convertToUnicode(const QByteArray &bytes)
 {
+#if QT_FEATURE_icu && QT_VERSION >= QT_VERSION_CHECK(6,4,0)
+	QStringDecoder decoder(m_name.constData(), QStringConverter::Flag::UsesIcu);
+	if (decoder.isValid()) {
+		return decoder(bytes);
+	} else {
+		qDebug() << "QStringDecoder not valid for" << m_name;
+		return QString();
+	}
+#else
     QString string(bytes.length() + 2, Qt::Uninitialized);
-
     const char *chars = bytes.constData();
     const char *end = chars + bytes.length();
     int convertedChars = 0;
@@ -60,7 +71,6 @@ QString ICUConverter::convertToUnicode(const QByteArray &bytes)
             qDebug("convertToUnicode failed: %s", u_errorName(error));
             break;
         }
-
         convertedChars = uc - (UChar *)string.data();
         if (chars >= end)
             break;
@@ -68,6 +78,7 @@ QString ICUConverter::convertToUnicode(const QByteArray &bytes)
     }
     string.resize(convertedChars);
     return string;
+#endif	
 }
 
 QList<QByteArray> ICUConverter::charsetNames()
